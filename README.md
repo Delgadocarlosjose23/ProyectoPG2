@@ -1,1 +1,1 @@
-wJ9`"Lemdv9[FEw-
+ssh -o StrictHostKeyChecking=no elliot@192.168.120.148
