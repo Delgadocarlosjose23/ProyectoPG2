@@ -1,7 +1,7 @@
 textpattern_bruteforce
 
 
-"import requests
+import requests
 from bs4 import BeautifulSoup
 
 # URL base del login
